@@ -32,7 +32,6 @@ class LAB2_LIB_API RsaCipher {
   PrivateKey _privateKey{};
 };
 
-LAB2_LIB_API void Init();
 }  // namespace lab2::rsa
 
 #endif  // OSLABS_RSA_H

@@ -90,20 +90,6 @@ constexpr uint64_t powModulo(const uint32_t& a, uint32_t b, uint32_t c) {
 
 }  // namespace
 
-void Init() {
-  RsaCipher cipher;
-  PrivateKey privateKey = cipher.privateKey();
-  std::cout << "privateKey.d: " << privateKey.d << '\n';
-  PublicKey publicKey = cipher.publicKey();
-  std::cout << "publicKey.n: " << publicKey.n << '\n';
-
-  uint64_t message = 8;
-  uint64_t enc = cipher.encrypt(message);
-  std::cout << "encode" << '(' << message << ')' << ':' << ' ' << enc << '\n';
-  std::cout << "decode" << '(' << enc << ')' << ':' << ' '
-            << cipher.decrypt(enc) << '\n';
-}
-
 RsaCipher::RsaCipher() {
   RandomPrimeSelector primeSelector;
   for (;;) {
