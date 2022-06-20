@@ -7,3 +7,4 @@ target_compile_definitions(${TARGET_NAME} PRIVATE LAB2_LIB_BUILD)
 
 add_executable(lab2_client main.cpp)
 target_link_libraries(lab2_client PRIVATE ${TARGET_NAME})
+target_compile_options(${TARGET_NAME} PUBLIC /EHsc)
