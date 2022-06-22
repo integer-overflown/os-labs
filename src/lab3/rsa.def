@@ -1,6 +1,9 @@
 LIBRARY os_lab3
 EXPORTS
-rsa_cipher_init
-rsa_cipher_encrypt
 rsa_cipher_decrypt
+rsa_cipher_encrypt
+rsa_cipher_free
+rsa_cipher_get_private_key
+rsa_cipher_get_public_key
+rsa_cipher_new
 rsa_encrypt_status_to_string

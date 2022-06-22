@@ -5,6 +5,11 @@
 #include <iostream>
 #include <random>
 
+struct RsaCipher {
+  PrivateKey privateKey;
+  PublicKey publicKey;
+};
+
 namespace {
 
 uint16_t gPrimesTable[] = {
@@ -88,24 +93,6 @@ constexpr uint64_t powModulo(const uint32_t &a, uint32_t b, uint32_t c) {
 
 }  // namespace
 
-void rsa_cipher_init(RsaCipher *instance) {
-  assert(instance);
-  instance->publicKey.e = 3;
-  RandomPrimeSelector primeSelector;
-  for (;;) {
-    const uint64_t p = primeSelector.get();
-    const uint64_t q = primeSelector.get();
-    const uint64_t phi = (p - 1) * (q - 1);
-    if (detail::gcd(phi, uint64_t(instance->publicKey.e)) != 1) {
-      continue;
-    }
-    instance->publicKey.n = double(p * q);
-    instance->privateKey.d = (double)detail::modInverse(
-        int64_t(instance->publicKey.e), int64_t(phi));
-    break;
-  }
-}
-
 RsaCipherEncryptStatus rsa_cipher_encrypt(const RsaCipher *instance,
                                           uint64_t message,
                                           uint64_t *outEncrypted) {
@@ -144,3 +131,43 @@ const char *rsa_encrypt_status_to_string(RsaCipherEncryptStatus status) {
       return "unknown error";
   }
 }
+
+RsaCipher *rsa_cipher_new() {
+  // By design, I wanted the library to be usable from C as well
+  // So we can't use 'new' here, because it throws, and C cannot handle
+  // exceptions i.e. we must stick with C way of memory allocations
+  auto instance = static_cast<RsaCipher *>(malloc(sizeof(RsaCipher)));
+
+  if (!instance) {  // out of memory
+    return nullptr;
+  }
+
+  instance->publicKey.e = 3;
+  RandomPrimeSelector primeSelector;
+  for (;;) {
+    const uint64_t p = primeSelector.get();
+    const uint64_t q = primeSelector.get();
+    const uint64_t phi = (p - 1) * (q - 1);
+    if (detail::gcd(phi, uint64_t(instance->publicKey.e)) != 1) {
+      continue;
+    }
+    instance->publicKey.n = double(p * q);
+    instance->privateKey.d = (double)detail::modInverse(
+        int64_t(instance->publicKey.e), int64_t(phi));
+    break;
+  }
+
+  return instance;
+}
+
+PublicKey rsa_cipher_get_public_key(const RsaCipher *instance) {
+  assert(instance);
+  return instance->publicKey;
+}
+
+PrivateKey rsa_cipher_get_private_key(const RsaCipher *instance) {
+  assert(instance);
+  return instance->privateKey;
+}
+
+void rsa_cipher_free(RsaCipher *instance) { free(instance); }

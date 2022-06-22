@@ -21,27 +21,32 @@ typedef struct {
   double e;
 } PublicKey;
 
-typedef struct {
-  PrivateKey privateKey;
-  PublicKey publicKey;
-} RsaCipher;
+typedef struct RsaCipher RsaCipher; // opaque pointer
 
-typedef enum {
+typedef enum RsaCipherEncryptStatus {
   RSA_CIPHER_ENCRYPT_STATUS_SUCCESS,
   RSA_CIPHER_ENCRYPT_STATUS_ERROR_MESSAGE_TOO_LONG
 } RsaCipherEncryptStatus;
 
-const char *rsa_encrypt_status_to_string(RsaCipherEncryptStatus status);
+typedef enum RsaCipherDecryptStatus {
+  RSA_CIPHER_DECRYPT_STATUS_SUCCESS
+} RsaCipherDecryptStatus;
 
-typedef enum { RSA_CIPHER_DECRYPT_STATUS_SUCCESS } RsaCipherDecryptStatus;
-
-void rsa_cipher_init(RsaCipher *instance);
+RsaCipher *rsa_cipher_new();
 
 _Check_return_ RsaCipherEncryptStatus rsa_cipher_encrypt(
     const RsaCipher *instance, uint64_t message, uint64_t *outEncrypted);
 
 _Check_return_ RsaCipherDecryptStatus rsa_cipher_decrypt(
     const RsaCipher *instance, uint64_t message, uint64_t *outDecrypted);
+
+PublicKey rsa_cipher_get_public_key(const RsaCipher *instance);
+
+PrivateKey rsa_cipher_get_private_key(const RsaCipher *instance);
+
+void rsa_cipher_free(RsaCipher *instance);
+
+const char *rsa_encrypt_status_to_string(RsaCipherEncryptStatus status);
 
 LAB3_END_DECLS
 
