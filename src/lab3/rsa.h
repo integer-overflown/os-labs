@@ -24,12 +24,12 @@ typedef struct {
 typedef struct RsaCipher RsaCipher; // opaque pointer
 
 typedef enum RsaCipherEncryptStatus {
-  RSA_CIPHER_ENCRYPT_STATUS_SUCCESS,
+  RSA_CIPHER_ENCRYPT_STATUS_SUCCESS = 0,
   RSA_CIPHER_ENCRYPT_STATUS_ERROR_MESSAGE_TOO_LONG
 } RsaCipherEncryptStatus;
 
 typedef enum RsaCipherDecryptStatus {
-  RSA_CIPHER_DECRYPT_STATUS_SUCCESS
+  RSA_CIPHER_DECRYPT_STATUS_SUCCESS = 0
 } RsaCipherDecryptStatus;
 
 RsaCipher *rsa_cipher_new();
