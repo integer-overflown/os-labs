@@ -1,0 +1,6 @@
+LIBRARY os_lab3
+EXPORTS
+rsa_cipher_init
+rsa_cipher_encrypt
+rsa_cipher_decrypt
+rsa_encrypt_status_to_string
