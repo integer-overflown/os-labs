@@ -10,3 +10,5 @@ set(CLIENT_TARGET_NAME ${TARGET_NAME}_client)
 add_executable(${CLIENT_TARGET_NAME} main.c)
 target_link_libraries(${CLIENT_TARGET_NAME} PRIVATE ${TARGET_NAME})
 target_compile_definitions(${CLIENT_TARGET_NAME} PRIVATE UNICODE _UNICODE)
+
+add_subdirectory(res)

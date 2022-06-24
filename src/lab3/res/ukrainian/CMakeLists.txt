@@ -1,0 +1,2 @@
+add_library(lab3_resources_ukrainian SHARED Lab3ResourcesUkrainian.rc)
+target_link_options(lab3_resources_ukrainian PRIVATE /NOENTRY)

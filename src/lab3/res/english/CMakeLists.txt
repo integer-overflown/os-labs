@@ -1,0 +1,2 @@
+add_library(lab3_resources_english SHARED Lab3ResourcesEnglish.rc)
+target_link_options(lab3_resources_english PRIVATE /NOENTRY)
