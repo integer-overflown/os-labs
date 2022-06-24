@@ -1,5 +1,5 @@
 set(TARGET_NAME ${PROJECT_EXE_NAME_PREFIX}lab3)
-set(LAB3_SRC rsa.cpp rsa.def)
+set(LAB3_SRC rsa.cpp rsa.def resourcelibrary.cpp resourcelibrary.h)
 set(LAB3_HDR rsa.h)
 
 add_library(${TARGET_NAME} SHARED ${LAB3_SRC} ${LAB3_HDR})
