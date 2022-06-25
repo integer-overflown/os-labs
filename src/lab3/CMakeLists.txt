@@ -1,3 +1,10 @@
+function(AddResourceDependency target resource)
+    add_dependencies(${target} ${resource})
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${resource}> $<TARGET_FILE_DIR:${target}>
+            )
+endfunction()
+
 set(TARGET_NAME ${PROJECT_EXE_NAME_PREFIX}lab3)
 set(LAB3_SRC rsa.cpp rsa.def resourcelibrary.cpp resourcelibrary.h)
 set(LAB3_HDR rsa.h)
@@ -12,3 +19,6 @@ target_link_libraries(${CLIENT_TARGET_NAME} PRIVATE ${TARGET_NAME})
 target_compile_definitions(${CLIENT_TARGET_NAME} PRIVATE UNICODE _UNICODE)
 
 add_subdirectory(res)
+
+AddResourceDependency(${CLIENT_TARGET_NAME} lab3_resources_english)
+AddResourceDependency(${CLIENT_TARGET_NAME} lab3_resources_ukrainian)
