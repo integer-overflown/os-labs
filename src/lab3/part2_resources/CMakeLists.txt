@@ -7,7 +7,7 @@ endfunction()
 
 add_subdirectory(res)
 
-set(RES_CLIENT_SRC resourcelibrary.cpp)
+set(RES_CLIENT_SRC main.cpp resourcelibrary.cpp)
 set(RES_CLIENT_HDR resourcelibrary.h)
 
 set(CLIENT_TARGET_NAME ${PROJECT_EXE_NAME_PREFIX}lab3_resource_client)
