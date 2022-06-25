@@ -4,16 +4,18 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace lab3 {
 class ResourceLibrary {
  public:
-  static std::optional<ResourceLibrary> load(LPCTSTR libName);
-  std::optional<std::wstring> GetString(UINT resId, UINT langId);
+  static std::optional<ResourceLibrary> load(std::basic_string_view<TCHAR> libName, UINT langId);
+  std::optional<std::wstring> GetString(UINT resId);
 
  private:
-  explicit ResourceLibrary(HMODULE libHandle);
+  explicit ResourceLibrary(HMODULE libHandle, UINT langId);
   HMODULE _libHandle;
+  UINT _langId;
 };
 }  // namespace lab3
 

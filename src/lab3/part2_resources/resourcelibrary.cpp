@@ -27,11 +27,11 @@ LPCWSTR FindStringResourceEx(HINSTANCE moduleHandle, UINT resId, UINT langId) {
 }
 }  // namespace
 
-ResourceLibrary::ResourceLibrary(HMODULE libHandle) : _libHandle(libHandle) {}
+ResourceLibrary::ResourceLibrary(HMODULE libHandle, UINT langId)
+    : _libHandle(libHandle), _langId(langId) {}
 
-std::optional<std::wstring> ResourceLibrary::GetString(UINT resId,
-                                                       UINT langId) {
-  LPCWSTR stringResStartPtr = FindStringResourceEx(_libHandle, resId, langId);
+std::optional<std::wstring> ResourceLibrary::GetString(UINT resId) {
+  LPCWSTR stringResStartPtr = FindStringResourceEx(_libHandle, resId, _langId);
 
   if (!stringResStartPtr) {
     return {};
@@ -41,9 +41,11 @@ std::optional<std::wstring> ResourceLibrary::GetString(UINT resId,
   return result;
 }
 
-std::optional<ResourceLibrary> ResourceLibrary::load(LPCTSTR libName) {
-  HMODULE dllHandle = LoadLibraryEx(libName, nullptr, LOAD_LIBRARY_AS_DATAFILE);
-  return dllHandle ? std::make_optional(ResourceLibrary{dllHandle})
+std::optional<ResourceLibrary> ResourceLibrary::load(
+    std::basic_string_view<TCHAR> libName, UINT langId) {
+  HMODULE dllHandle =
+      LoadLibraryEx(libName.data(), nullptr, LOAD_LIBRARY_AS_DATAFILE);
+  return dllHandle ? std::make_optional(ResourceLibrary{dllHandle, langId})
                    : std::nullopt;
 }
 }  // namespace lab3
