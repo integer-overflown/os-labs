@@ -19,6 +19,19 @@ class BuiltInRegister {
   static constexpr const char* commandName() { return Sub::cCommandName; }
 };
 
-}
+class AbstractCommand : public ICommand {
+ public:
+  std::string errorString() override { return _errorString; }
+
+ protected:
+  void setErrorString(std::string errorString) {
+    _errorString = std::move(errorString);
+  }
+
+ private:
+  std::string _errorString;
+};
+
+}  // namespace cli
 
 #endif  // OSLABS_COMMAND_H
