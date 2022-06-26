@@ -1,0 +1,9 @@
+set(TARGET_NAME ${PROJECT_EXE_NAME_PREFIX}lab4)
+set(LAB4_HDR builtinregistry.h)
+set(LAB4_SRC main.cpp builtinregistry.cpp)
+
+add_executable(${TARGET_NAME} ${LAB4_SRC} ${LAB4_HDR})
+
+add_subdirectory(cli)
+
+target_link_libraries(${TARGET_NAME} PRIVATE cli_helpers)
