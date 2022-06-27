@@ -50,8 +50,10 @@ InputParseStatus CommandInterpreter::acceptInput(std::string_view line) {
       return InputParseStatus::ErrorUnknownCommand;
     }
 
+    const auto &[minArgCount, maxArgCount] = command->positionalArgumentCount();
     // first token is command name
-    if (command->positionalArgumentCount() != tokens.size() - 1) {
+    if (size_t numArgs = tokens.size() - 1;
+        !(minArgCount <= numArgs && numArgs <= maxArgCount)) {
       std::ostringstream usage;
       command->printHelp(usage);
       setErrorString("usage: " + usage.str());

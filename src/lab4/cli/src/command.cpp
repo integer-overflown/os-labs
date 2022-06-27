@@ -9,8 +9,8 @@ void AbstractCommand::addPositionalArgument(std::string name,
   _positionalArguments.emplace_back(std::move(name), std::move(help));
 }
 
-size_t AbstractCommand::positionalArgumentCount() const noexcept {
-  return _positionalArguments.size();
+std::pair<std::size_t, std::size_t> AbstractCommand::positionalArgumentCount() const noexcept {
+  return {_positionalArguments.size(), _positionalArguments.size()};
 }
 
 void AbstractCommand::setCommandDescription(std::string commandDescription) {
