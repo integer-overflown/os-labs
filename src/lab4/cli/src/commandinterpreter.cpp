@@ -8,7 +8,7 @@ void CommandInterpreter::setErrorString(std::string errorString) {
 
 CommandInterpreter::CommandInterpreter(
     std::unique_ptr<ICommandRegistry> commandRegistry)
-    : _commandRegistry(std::move(commandRegistry)) {}
+    : _commandRegistry(std::move(commandRegistry)), _quitCommand("quit") {}
 
 InputParseStatus CommandInterpreter::acceptInput(std::string_view line) {
   using IteratorType = std::string_view::const_iterator;
@@ -34,6 +34,11 @@ InputParseStatus CommandInterpreter::acceptInput(std::string_view line) {
   }
 
   if (!tokens.empty()) {
+    if (tokens.front() == _quitCommand) {
+      setErrorString("Quit requested");
+      return InputParseStatus::ErrorQuitRequested;
+    }
+
     std::string commandName(tokens.front());
     std::unique_ptr<ICommand> command =
         _commandRegistry->lookupCommand(tokens.front());
@@ -45,7 +50,7 @@ InputParseStatus CommandInterpreter::acceptInput(std::string_view line) {
 
     tokens.erase(tokens.begin());
 
-    if (!command->acceptInput(std::move(tokens))) {
+    if (!command->acceptInput(tokens)) {
       std::string errorString = command->errorString();
       setErrorString(
           "Failed to execute command: '" + commandName +
@@ -58,5 +63,9 @@ InputParseStatus CommandInterpreter::acceptInput(std::string_view line) {
 }
 
 std::string CommandInterpreter::errorString() const { return _errorString; }
+
+void CommandInterpreter::setQuitCommand(std::string quitCommand) {
+  _quitCommand = std::move(quitCommand);
+}
 
 }  // namespace cli

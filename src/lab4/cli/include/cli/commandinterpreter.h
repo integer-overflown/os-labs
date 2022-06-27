@@ -10,7 +10,8 @@ namespace cli {
 enum class InputParseStatus {
   NoError,
   ErrorUnknownCommand,
-  ErrorInvokedCommandFailed
+  ErrorInvokedCommandFailed,
+  ErrorQuitRequested
 };
 
 class CommandInterpreter {
@@ -19,11 +20,13 @@ class CommandInterpreter {
       std::unique_ptr<ICommandRegistry> commandRegistry);
   [[nodiscard]] InputParseStatus acceptInput(std::string_view line);
   [[nodiscard]] std::string errorString() const;
+  void setQuitCommand(std::string quitCommand);
 
  private:
   void setErrorString(std::string errorString);
 
   std::string _errorString;
+  std::string _quitCommand;
   std::unique_ptr<ICommandRegistry> _commandRegistry;
 };
 

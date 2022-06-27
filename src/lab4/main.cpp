@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "cli/commandinterpreter.h"
 #include "builtinregistry.h"
+#include "cli/commandinterpreter.h"
 
 int main() {
   cli::CommandInterpreter interpreter(lab4::builtInCommandRegistry());
@@ -12,7 +12,12 @@ int main() {
     if (!std::getline(std::cin, input)) {
       break;
     }
-    if (interpreter.acceptInput(input) != cli::InputParseStatus::NoError) {
+    if (cli::InputParseStatus status = interpreter.acceptInput(input);
+        status == cli::InputParseStatus::NoError) {
+      continue;
+    } else if (status == cli::InputParseStatus::ErrorQuitRequested) {
+      break;
+    } else {
       std::cout << interpreter.errorString() << '\n';
     }
   }
