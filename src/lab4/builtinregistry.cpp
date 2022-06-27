@@ -15,7 +15,7 @@ class CreateCommand : public cli::AbstractCommand,
  public:
   static constexpr auto cCommandName = "create";
   [[nodiscard]] std::string name() const override;
-  bool acceptInput(std::vector<std::string_view> tokens) override;
+  bool acceptInput(const std::vector<std::string_view> &tokens) override;
 
  private:
   bool createEmailFile(std::string_view fileName);
@@ -23,7 +23,7 @@ class CreateCommand : public cli::AbstractCommand,
 
 std::string CreateCommand::name() const { return cCommandName; }
 
-bool CreateCommand::acceptInput(std::vector<std::string_view> tokens) {
+bool CreateCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   if (tokens.empty()) {
     setErrorString("no subcommand given");
     return false;
@@ -76,12 +76,12 @@ class BuiltInCommandRegistry : public cli::ICommandRegistry {
       std::string_view commandName) override;
 
  private:
-  static CommandMap buildInCommands();
+  static CommandMap builtInCommands();
 
   template <typename T>
   std::enable_if_t<std::is_base_of_v<cli::ICommand, T> &&
                        std::is_base_of_v<cli::BuiltInRegister<T>, T>,
-                   CommandMap::value_type> static buildInCommandFactory() {
+                   CommandMap::value_type> static builtInCommandFactory() {
     return {T::commandName(), []() -> std::unique_ptr<cli::ICommand> {
               return std::make_unique<T>();
             }};
@@ -101,10 +101,10 @@ std::unique_ptr<cli::ICommand> BuiltInCommandRegistry::lookupCommand(
                                  : it->second();
 }
 
-BuiltInCommandRegistry::CommandMap BuiltInCommandRegistry::buildInCommands() {
+BuiltInCommandRegistry::CommandMap BuiltInCommandRegistry::builtInCommands() {
   // this is the place for extending built-in commands
-  return {buildInCommandFactory<CreateCommand>()};
+  return {builtInCommandFactory<CreateCommand>()};
 }
 
 BuiltInCommandRegistry::BuiltInCommandRegistry()
-    : _commandMap(buildInCommands()) {}
+    : _commandMap(builtInCommands()) {}

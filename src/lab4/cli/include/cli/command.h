@@ -9,7 +9,7 @@ class ICommand {
  public:
   virtual ~ICommand() = default;
   [[nodiscard]] virtual std::string name() const = 0;
-  virtual bool acceptInput(std::vector<std::string_view> tokens) = 0;
+  virtual bool acceptInput(const std::vector<std::string_view> &tokens) = 0;
   virtual std::string errorString() = 0;
 };
 
