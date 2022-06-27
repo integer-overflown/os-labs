@@ -1,5 +1,7 @@
 #include "builtinregistry.h"
 
+#include <Windows.h>
+
 #include <memory>
 #include <string>
 #include <string_view>
@@ -8,22 +10,61 @@
 
 #include "cli/command.h"
 
-class CreateCommand : public cli::ICommand,
+class CreateCommand : public cli::AbstractCommand,
                       public cli::BuiltInRegister<CreateCommand> {
  public:
   static constexpr auto cCommandName = "create";
   [[nodiscard]] std::string name() const override;
   bool acceptInput(std::vector<std::string_view> tokens) override;
-  std::string errorString() override;
+
+ private:
+  bool createEmailFile(std::string_view fileName);
 };
 
 std::string CreateCommand::name() const { return cCommandName; }
 
 bool CreateCommand::acceptInput(std::vector<std::string_view> tokens) {
-  return true;
+  if (tokens.empty()) {
+    setErrorString("no subcommand given");
+    return false;
+  }
+
+  if (tokens[0] == "email") {
+    if (tokens.size() != 2) {
+      setErrorString("expected filename");
+      return false;
+    }
+
+    return createEmailFile(tokens[1]);
+  } else {
+    setErrorString("unknown subcommand: " + std::string(tokens[0]));
+    return false;
+  }
 }
 
-std::string CreateCommand::errorString() { return {}; }
+bool CreateCommand::createEmailFile(std::string_view fileName) {
+  if (fileName.length() > MAX_PATH) {
+    setErrorString("filename is too long");
+    return false;
+  }
+
+  HANDLE fileHandle = CreateFileA(
+      fileName.data(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
+      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr);
+
+  if (fileHandle == INVALID_HANDLE_VALUE) {
+    DWORD errorCode = GetLastError();
+    if (errorCode == ERROR_FILE_EXISTS) {
+      setErrorString("file already exists: " + std::string(fileName));
+    } else {
+      setErrorString("unknown error, code: " + std::to_string(errorCode));
+    }
+    return false;
+  }
+
+  CloseHandle(fileHandle);
+  return true;
+}
 
 class BuiltInCommandRegistry : public cli::ICommandRegistry {
   using CommandSupplier = std::unique_ptr<cli::ICommand> (*)();

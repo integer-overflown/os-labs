@@ -7,3 +7,4 @@ add_executable(${TARGET_NAME} ${LAB4_SRC} ${LAB4_HDR})
 add_subdirectory(cli)
 
 target_link_libraries(${TARGET_NAME} PRIVATE cli_helpers)
+target_compile_definitions(${TARGET_NAME} PRIVATE _UNICODE UNICODE)
