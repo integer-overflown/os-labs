@@ -7,7 +7,7 @@ namespace cli {
 
 class ICommand {
  public:
-  virtual ~ICommand() = default;
+  virtual ~ICommand() noexcept = default;
   [[nodiscard]] virtual std::string name() const = 0;
   virtual bool acceptInput(const std::vector<std::string_view> &tokens) = 0;
   virtual std::string errorString() = 0;
