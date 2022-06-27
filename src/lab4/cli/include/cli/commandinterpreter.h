@@ -11,7 +11,8 @@ enum class InputParseStatus {
   NoError,
   ErrorUnknownCommand,
   ErrorInvokedCommandFailed,
-  ErrorQuitRequested
+  ErrorQuitRequested,
+  ErrorInvalidCommandSyntax
 };
 
 class CommandInterpreter {

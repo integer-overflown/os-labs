@@ -1,5 +1,7 @@
 #include "cli/commandinterpreter.h"
 
+#include <sstream>
+
 namespace cli {
 
 void CommandInterpreter::setErrorString(std::string errorString) {
@@ -46,6 +48,14 @@ InputParseStatus CommandInterpreter::acceptInput(std::string_view line) {
     if (!command) {
       setErrorString("Cannot recognize the command: " + commandName);
       return InputParseStatus::ErrorUnknownCommand;
+    }
+
+    // first token is command name
+    if (command->positionalArgumentCount() != tokens.size() - 1) {
+      std::ostringstream usage;
+      command->printHelp(usage);
+      setErrorString("usage: " + usage.str());
+      return InputParseStatus::ErrorInvalidCommandSyntax;
     }
 
     tokens.erase(tokens.begin());

@@ -14,12 +14,19 @@ class CreateCommand : public cli::AbstractCommand,
                       public cli::BuiltInRegister<CreateCommand> {
  public:
   static constexpr auto cCommandName = "create";
+  CreateCommand();
   [[nodiscard]] std::string name() const override;
   bool acceptInput(const std::vector<std::string_view> &tokens) override;
 
  private:
   bool createEmailFile(std::string_view fileName);
 };
+
+CreateCommand::CreateCommand() {
+    setCommandDescription("create various entities, like emails");
+    addPositionalArgument("subcommand", "subcommand to invoke, valid values are: email");
+    addPositionalArgument("filename", "email file to create");
+}
 
 std::string CreateCommand::name() const { return cCommandName; }
 
@@ -30,11 +37,6 @@ bool CreateCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   }
 
   if (tokens[0] == "email") {
-    if (tokens.size() != 2) {
-      setErrorString("expected filename");
-      return false;
-    }
-
     return createEmailFile(tokens[1]);
   } else {
     setErrorString("unknown subcommand: " + std::string(tokens[0]));
