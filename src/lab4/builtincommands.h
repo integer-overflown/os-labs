@@ -21,7 +21,7 @@ class DeleteCommand : public cli::AbstractCommand,
   DeleteCommand();
   [[nodiscard]] std::string name() const override;
   bool acceptInput(const std::vector<std::string_view> &tokens) override;
-  std::pair<std::size_t, std::size_t> positionalArgumentCount()
+  [[nodiscard]] std::pair<std::size_t, std::size_t> positionalArgumentCount()
       const noexcept override;
 
  private:
