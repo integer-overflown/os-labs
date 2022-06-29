@@ -13,7 +13,7 @@ class MailBox : public ISerializable {
   MailBox(std::string name, size_t maxSize);
   [[nodiscard]] bool writeObject(std::ostream& out) const override;
   [[nodiscard]] bool readObject(std::istream& in) override;
-  [[nodiscard]] std::string getName() const;
+  [[nodiscard]] const std::string &getName() const;
   [[nodiscard]] size_t getMaxSize() const;
 
  private:

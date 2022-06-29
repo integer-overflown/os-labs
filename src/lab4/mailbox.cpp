@@ -20,7 +20,7 @@ bool MailBox::readObject(std::istream& in) {
   return (in >> _name) && (in >> _maxSize);
 }
 
-std::string MailBox::getName() const { return _name; }
+const std::string& MailBox::getName() const { return _name; }
 
 size_t MailBox::getMaxSize() const { return _maxSize; }
 
