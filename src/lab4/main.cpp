@@ -3,7 +3,10 @@
 #include "builtinregistry.h"
 #include "cli/commandinterpreter.h"
 
+#include <Windows.h>
+
 int main() {
+  SetConsoleCP(CP_UTF8);
   cli::CommandInterpreter interpreter(lab4::builtInCommandRegistry());
 
   for (;;) {

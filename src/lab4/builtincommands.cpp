@@ -10,33 +10,15 @@
 namespace lab4 {
 namespace {
 
-std::string ConvertToMultibyte(std::wstring_view string) {
-  const auto sourceLength = static_cast<int>(string.size());
-  int resultLen = WideCharToMultiByte(CP_UTF8, 0, string.data(), sourceLength,
-                                      nullptr, 0, nullptr, nullptr);
-
-  std::string buf;
-  buf.resize(resultLen);
-
-  if (WideCharToMultiByte(CP_UTF8, 0, string.data(), sourceLength, buf.data(),
-                          resultLen, nullptr, nullptr)) {
-    return buf;
-  }
-
-  std::cerr << "WideCharToMultiByte resulted with error";
-
-  return {};
-}
-
 bool EnterEditingMode(HANDLE fileHandle) {
-  std::wregex quitRegex(LR"(^\s*\.quit)", std::regex_constants::ECMAScript |
+  std::regex quitRegex(R"(^\s*\.quit)", std::regex_constants::ECMAScript |
                                               std::regex_constants::icase);
-  std::wstringstream buffer;
-  std::wstring line;
+  std::stringstream buffer;
+  std::string line;
 
-  while (std::getline(std::wcin, line)) {
+  while (std::getline(std::cin, line)) {
     if (std::regex_search(line, quitRegex)) {
-      std::string contents = ConvertToMultibyte(buffer.str());
+      std::string contents = buffer.str();
       DWORD numBytesWritten;
       BOOL status =
           WriteFile(fileHandle, static_cast<const void *>(contents.data()),
