@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 
+#include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -28,6 +29,9 @@ size_t parseInt(std::string_view s) {
 }
 
 bool EnterEditingMode(HANDLE fileHandle) {
+  std::cout << "Type '.done' to finish editing the file" << '\n';
+  std::cout << " -- You're now in editing mode -- " << '\n';
+
   std::regex quitRegex(R"(^\s*\.done)", std::regex_constants::ECMAScript |
                                             std::regex_constants::icase);
   std::stringstream buffer;
@@ -144,6 +148,28 @@ bool CreateCommand::acceptInput(const std::vector<std::string_view> &tokens) {
 
 bool CreateCommand::createEmailFile(std::string_view fileName,
                                     std::string_view mailBoxName) {
+  using namespace std::string_literals;
+  auto optMailBoxes = _configuration->availableMailBoxes();
+
+  if (!optMailBoxes) {
+    setErrorString("failed to read configuration");
+    return false;
+  }
+
+  lab4::MailBox mailBox;
+
+  if (auto it = std::find_if(optMailBoxes->begin(), optMailBoxes->end(),
+                             [mailBoxName](const lab4::MailBox &mb) {
+                               return mb.getName() == mailBoxName;
+                             });
+      it == optMailBoxes->end()) {
+    setErrorString("mailbox"s + ' ' + '\'' + std::string(mailBoxName) + '\'' +
+                   ' ' + "doesn't exist"s);
+    return false;
+  } else {
+    mailBox = *it;
+  }
+
   std::string folderName = lab4::GetMailboxFolderName(mailBoxName);
 
   if (fileName.length() > MAX_PATH - folderName.size()) {
@@ -161,6 +187,14 @@ bool CreateCommand::createEmailFile(std::string_view fileName,
     }
   }
 
+  if (auto optFileCount = lab4::FolderFileCount(folderName); !optFileCount) {
+    setErrorString("failed to access directory " + folderName);
+    return false;
+  } else if (*optFileCount == mailBox.getMaxSize()) {
+    setErrorString("maximum size for mailbox has been reached");
+    return false;
+  }
+
   HANDLE fileHandle =
       CreateFileA((folderName + '\\' + std::string(fileName)).data(),
                   GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
@@ -175,9 +209,6 @@ bool CreateCommand::createEmailFile(std::string_view fileName,
     }
     return false;
   }
-
-  std::cout << "Type '.done' to finish editing the file" << '\n';
-  std::cout << " -- You're now in editing mode -- " << '\n';
 
   bool success = lab4::EnterEditingMode(fileHandle);
 
