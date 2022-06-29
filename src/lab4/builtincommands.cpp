@@ -19,7 +19,7 @@ size_t parseInt(std::string_view s) {
   errno = 0;
   auto value = std::strtoll(s.data(), &endPtr, 10);
 
-  if (!(errno == 0 || *endPtr == '\0')) {
+  if (!(errno == 0 && *endPtr == '\0')) {
     return {};
   }
 
