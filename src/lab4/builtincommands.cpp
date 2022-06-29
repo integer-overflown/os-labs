@@ -342,13 +342,17 @@ bool ListCommand::listMailBoxes() {
     return false;
   }
 
-  std::for_each(optMailBoxes->begin(), optMailBoxes->end(),
-                [num = size_t(1)](const lab4::MailBox &mb) mutable {
-                  std::cout << num << ')' << ' '
-                            << std::quoted(mb.getName(), '\'') << ',' << ' '
-                            << "max size" << ' ' << mb.getMaxSize() << '\n';
-                  ++num;
-                });
+  std::for_each(
+      optMailBoxes->begin(), optMailBoxes->end(),
+      [num = size_t(1)](const lab4::MailBox &mb) mutable {
+        const std::string &mailBoxName = mb.getName();
+        const std::optional<size_t> used =
+            lab4::FolderFileCount(lab4::GetMailboxFolderName(mailBoxName));
+        std::cout << num << ')' << ' ' << std::quoted(mailBoxName, '\'') << ','
+                  << ' ' << "contains" << ' ' << used.value_or(0) << '/'
+                  << mb.getMaxSize() << ' ' << "emails" << '\n';
+        ++num;
+      });
 
   return true;
 }
