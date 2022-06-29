@@ -4,10 +4,15 @@
 
 namespace lab4 {
 
-std::vector<MailBox> Configuration::availableMailBoxes() const {
+std::optional<std::vector<MailBox>> Configuration::availableMailBoxes() const {
   Settings settings;
   std::vector<MailBox> mailBoxes;
-  return settings.read(mailBoxes) ? mailBoxes : std::vector<MailBox>();
+
+  if (!settings.read(mailBoxes)) {
+    return {};
+  }
+
+  return mailBoxes;
 }
 
 bool Configuration::addMailBox(const MailBox& mailBox) {
@@ -15,4 +20,4 @@ bool Configuration::addMailBox(const MailBox& mailBox) {
   return settings.write(mailBox);
 }
 
-}
+}  // namespace lab4
