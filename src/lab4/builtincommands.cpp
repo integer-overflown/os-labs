@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 
+#include "log.h"
 #include "mailbox.h"
 
 namespace lab4 {
@@ -52,6 +53,42 @@ bool EnterEditingMode(HANDLE fileHandle) {
 std::string GetMailboxFolderName(std::string_view mailBoxName) {
   using namespace std::string_literals;
   return "mailbox"s + '-' + std::string(mailBoxName) + '-' + "contents";
+}
+
+std::optional<size_t> FolderFileCount(const std::string &folderName) {
+  std::string wildcard = "\\*";
+
+  if (folderName.size() > MAX_PATH - wildcard.size()) {
+    LOG_WARN("Folder name is too long");
+    return {};
+  }
+
+  WIN32_FIND_DATAA fileData;
+  HANDLE findHandle = FindFirstFileA((folderName + wildcard).data(), &fileData);
+
+  if (findHandle == INVALID_HANDLE_VALUE) {
+    LOG_WARN("Failed to list directory contents: ") << GetLastError();
+    return {};
+  }
+
+  size_t count{};
+
+  for (;;) {
+    BOOL status = FindNextFileA(findHandle, &fileData);
+    if (!status) {
+      if (GetLastError() == ERROR_NO_MORE_FILES) {
+        break;
+      } else {
+        return {};
+      }
+    }
+    // skip parent dir reference
+    if (std::strcmp(fileData.cFileName, "..") != 0) {
+      ++count;
+    }
+  }
+
+  return count;
 }
 
 }  // namespace
