@@ -2,6 +2,7 @@
 
 #include "builtinregistry.h"
 #include "cli/commandinterpreter.h"
+#include "settings.h"
 
 #include <Windows.h>
 
