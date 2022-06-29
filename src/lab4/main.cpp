@@ -1,14 +1,16 @@
+#include <Windows.h>
+
 #include <iostream>
 
 #include "builtinregistry.h"
 #include "cli/commandinterpreter.h"
+#include "configuration.h"
 #include "settings.h"
-
-#include <Windows.h>
 
 int main() {
   SetConsoleCP(CP_UTF8);
-  cli::CommandInterpreter interpreter(lab4::builtInCommandRegistry());
+  cli::CommandInterpreter interpreter(
+      lab4::builtInCommandRegistry(std::make_shared<lab4::Configuration>()));
 
   for (;;) {
     std::string input;

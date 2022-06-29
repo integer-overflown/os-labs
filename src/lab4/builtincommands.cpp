@@ -3,16 +3,31 @@
 #include <Windows.h>
 
 #include <iostream>
+#include <optional>
 #include <regex>
 #include <sstream>
 #include <string>
 
+#include "mailbox.h"
+
 namespace lab4 {
 namespace {
 
+size_t parseInt(std::string_view s) {
+  char *endPtr;
+  errno = 0;
+  auto value = std::strtoll(s.data(), &endPtr, 10);
+
+  if (!(errno == 0 || *endPtr == '\0')) {
+    return {};
+  }
+
+  return value;
+}
+
 bool EnterEditingMode(HANDLE fileHandle) {
   std::regex quitRegex(R"(^\s*\.quit)", std::regex_constants::ECMAScript |
-                                              std::regex_constants::icase);
+                                            std::regex_constants::icase);
   std::stringstream buffer;
   std::string line;
 
@@ -36,11 +51,13 @@ bool EnterEditingMode(HANDLE fileHandle) {
 }  // namespace
 }  // namespace lab4
 
-CreateCommand::CreateCommand() {
+CreateCommand::CreateCommand(
+    std::shared_ptr<lab4::IConfiguration> configuration)
+    : _configuration(std::move(configuration)) {
   setCommandDescription("create various entities, like emails");
-  addPositionalArgument("subcommand",
-                        "subcommand to invoke, valid values are: email");
-  addPositionalArgument("filename", "email file to create");
+  addPositionalArgument(
+      "subcommand", "subcommand to invoke, valid values are: email, mailbox");
+  addPositionalArgument("name", "name of entity, whether a file or a mailbox");
 }
 
 std::string CreateCommand::name() const { return cCommandName; }
@@ -53,6 +70,22 @@ bool CreateCommand::acceptInput(const std::vector<std::string_view> &tokens) {
 
   if (tokens[0] == "email") {
     return createEmailFile(tokens[1]);
+  } else if (tokens[0] == "mailbox") {
+    if (tokens.size() != 3) {
+      setErrorString(
+          "max size of mailbox is a required parameter,"
+          " pass it as the third value");
+      return false;
+    }
+
+    auto optSize = lab4::parseInt(tokens[2]);
+
+    if (!optSize) {
+      setErrorString("max size must be a valid non-negative int");
+      return false;
+    }
+
+    return createMailBox(tokens[1], optSize);
   } else {
     setErrorString("unknown subcommand: " + std::string(tokens[0]));
     return false;
@@ -91,6 +124,24 @@ bool CreateCommand::createEmailFile(std::string_view fileName) {
 
   CloseHandle(fileHandle);
   return success;
+}
+
+bool CreateCommand::createMailBox(std::string_view name, size_t size) {
+  lab4::MailBox mailBox(std::string(name), size);
+  bool success = _configuration->addMailBox(mailBox);
+
+  if (!success) {
+    setErrorString("Failed to save mail box");
+    return false;
+  }
+
+  return success;
+}
+
+std::pair<std::size_t, std::size_t> CreateCommand::positionalArgumentCount()
+    const noexcept {
+  auto sizeRange = AbstractCommand::positionalArgumentCount();
+  return {sizeRange.first, sizeRange.first + 1};
 }
 
 DeleteCommand::DeleteCommand() {
