@@ -128,11 +128,30 @@ bool CreateCommand::createEmailFile(std::string_view fileName) {
 }
 
 bool CreateCommand::createMailBox(std::string_view name, size_t size) {
+  using namespace std::string_literals;
   lab4::MailBox mailBox(std::string(name), size);
+
+  auto optAvailable = _configuration->availableMailBoxes();
+
+  if (!optAvailable) {
+    setErrorString("failed to read configuration");
+    return false;
+  }
+
+  auto existingIt = std::find_if(
+      optAvailable->begin(), optAvailable->end(),
+      [name](const lab4::MailBox &mb) { return mb.getName() == name; });
+
+  if (existingIt != optAvailable->end()) {
+    setErrorString("mailbox"s + ' ' + std::string(name) + ' ' +
+                   "already exists"s);
+    return false;
+  }
+
   bool success = _configuration->addMailBox(mailBox);
 
   if (!success) {
-    setErrorString("Failed to save mail box");
+    setErrorString("failed to save mail box");
     return false;
   }
 
