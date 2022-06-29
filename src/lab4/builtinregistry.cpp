@@ -27,16 +27,16 @@ class BuiltInCommandRegistry : public cli::ICommandRegistry {
                        std::is_base_of_v<cli::BuiltInRegister<T>, T>,
                    CommandMap::value_type>
   builtInCommandFactory() {
-    return {T::commandName(),
-            [configuration = std::move(
-                 _configuration)]() -> std::unique_ptr<cli::ICommand> {
-              if constexpr (std::is_constructible_v<
-                                T, std::shared_ptr<lab4::IConfiguration>>) {
-                return std::make_unique<T>(configuration);
-              } else {
-                return std::make_unique<T>();
-              }
-            }};
+    return {
+        T::commandName(),
+        [configuration = _configuration]() -> std::unique_ptr<cli::ICommand> {
+          if constexpr (std::is_constructible_v<
+                            T, std::shared_ptr<lab4::IConfiguration>>) {
+            return std::make_unique<T>(configuration);
+          } else {
+            return std::make_unique<T>();
+          }
+        }};
   }
 
   CommandMap _commandMap;
