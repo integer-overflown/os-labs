@@ -29,8 +29,19 @@ bool Settings::write(const std::vector<MailBox>& mailBoxes) {
 }
 
 bool Settings::read(std::vector<MailBox>& mailBoxes) {
-  return std::all_of(mailBoxes.begin(), mailBoxes.end(),
-                     [this](MailBox& mailBox) { return read(mailBox); });
+  for (MailBox mailBox;;) {
+    if (!read(mailBox)) {
+      if (_outSettingsFile.eof()) {
+        break;
+      } else {
+        LOG_WARN("Error occurred when reading settings");
+        return false;
+      }
+    }
+    mailBoxes.emplace_back(std::move(mailBox));
+  }
+
+  return true;
 }
 
 }  // namespace lab4
