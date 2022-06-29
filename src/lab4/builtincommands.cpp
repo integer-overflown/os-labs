@@ -49,6 +49,11 @@ bool EnterEditingMode(HANDLE fileHandle) {
   return true;
 }
 
+std::string GetMailboxFolderName(std::string_view mailBoxName) {
+  using namespace std::string_literals;
+  return "mailbox"s + '-' + std::string(mailBoxName) + '-' + "contents";
+}
+
 }  // namespace
 }  // namespace lab4
 
@@ -70,7 +75,14 @@ bool CreateCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   }
 
   if (tokens[0] == "email") {
-    return createEmailFile(tokens[1]);
+    if (tokens.size() != 3) {
+      setErrorString(
+          "email mailbox is a required parameter, "
+          "pass it as the third value");
+      return false;
+    }
+
+    return createEmailFile(tokens[1], tokens[2]);
   } else if (tokens[0] == "mailbox") {
     if (tokens.size() != 3) {
       setErrorString(
@@ -93,15 +105,29 @@ bool CreateCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   }
 }
 
-bool CreateCommand::createEmailFile(std::string_view fileName) {
-  if (fileName.length() > MAX_PATH) {
+bool CreateCommand::createEmailFile(std::string_view fileName,
+                                    std::string_view mailBoxName) {
+  std::string folderName = lab4::GetMailboxFolderName(mailBoxName);
+
+  if (fileName.length() > MAX_PATH - folderName.size()) {
     setErrorString("filename is too long");
     return false;
   }
 
-  HANDLE fileHandle = CreateFileA(
-      fileName.data(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
-      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr);
+  if (!CreateDirectoryA(folderName.c_str(), nullptr)) {
+    if (GetLastError() != ERROR_ALREADY_EXISTS) {
+      setErrorString(
+          "unexpected error occurred when created mailbox directory, error "
+          "code " +
+          std::to_string(GetLastError()));
+      return false;
+    }
+  }
+
+  HANDLE fileHandle =
+      CreateFileA((folderName + '\\' + std::string(fileName)).data(),
+                  GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
+                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr);
 
   if (fileHandle == INVALID_HANDLE_VALUE) {
     DWORD errorCode = GetLastError();

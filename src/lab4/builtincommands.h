@@ -14,7 +14,7 @@ class CreateCommand : public cli::AbstractCommand,
       const noexcept override;
 
  private:
-  bool createEmailFile(std::string_view fileName);
+  bool createEmailFile(std::string_view fileName, std::string_view mailBoxName);
   bool createMailBox(std::string_view name, size_t size);
 
   std::shared_ptr<lab4::IConfiguration> _configuration;
