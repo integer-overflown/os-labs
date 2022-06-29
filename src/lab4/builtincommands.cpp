@@ -27,7 +27,7 @@ size_t parseInt(std::string_view s) {
 }
 
 bool EnterEditingMode(HANDLE fileHandle) {
-  std::regex quitRegex(R"(^\s*\.quit)", std::regex_constants::ECMAScript |
+  std::regex quitRegex(R"(^\s*\.done)", std::regex_constants::ECMAScript |
                                             std::regex_constants::icase);
   std::stringstream buffer;
   std::string line;
