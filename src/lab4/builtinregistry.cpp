@@ -60,5 +60,6 @@ BuiltInCommandRegistry::BuiltInCommandRegistry(
     : _configuration(std::move(configuration)) {
   assert(_configuration);
   _commandMap = {builtInCommandFactory<CreateCommand>(),
-                 builtInCommandFactory<DeleteCommand>()};
+                 builtInCommandFactory<DeleteCommand>(),
+                 builtInCommandFactory<ListCommand>()};
 }

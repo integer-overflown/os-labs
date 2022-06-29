@@ -34,4 +34,18 @@ class DeleteCommand : public cli::AbstractCommand,
   bool deleteEmailFile(std::string_view fileName);
 };
 
+class ListCommand : public cli::AbstractCommand,
+                    public cli::BuiltInRegister<ListCommand> {
+ public:
+  static constexpr auto cCommandName = "list";
+  explicit ListCommand(std::shared_ptr<lab4::IConfiguration> configuration);
+  [[nodiscard]] std::string name() const override;
+  bool acceptInput(const std::vector<std::string_view> &tokens) override;
+
+ private:
+  bool listMailBoxes();
+
+  std::shared_ptr<lab4::IConfiguration> _configuration;
+};
+
 #endif  // OSLABS_BUILTINCOMMANDS_H

@@ -9,6 +9,7 @@ namespace lab4 {
 
 class MailBox : public ISerializable {
  public:
+  MailBox() = default;
   MailBox(std::string name, size_t maxSize);
   [[nodiscard]] bool writeObject(std::ostream& out) const override;
   [[nodiscard]] bool readObject(std::istream& in) override;

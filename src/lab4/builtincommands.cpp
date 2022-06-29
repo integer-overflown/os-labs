@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <regex>
@@ -195,8 +196,46 @@ bool DeleteCommand::deleteEmailFile(std::string_view fileName) {
 
   return true;
 }
+
+ListCommand::ListCommand(std::shared_ptr<lab4::IConfiguration> configuration)
+    : _configuration(std::move(configuration)) {
+  setCommandDescription("List various available instances, like mailboxes");
+  addPositionalArgument("instanceType",
+                        "instances to list, supported values: mailbox");
+}
+
 std::pair<std::size_t, std::size_t> DeleteCommand::positionalArgumentCount()
     const noexcept {
   size_t argCount = AbstractCommand::positionalArgumentCount().first;
   return {argCount, argCount + 1};
+}
+
+std::string ListCommand::name() const { return cCommandName; }
+
+bool ListCommand::acceptInput(const std::vector<std::string_view> &tokens) {
+  if (tokens[0] == "mailbox") {
+    return listMailBoxes();
+  } else {
+    setErrorString("unknown subcommand: " + std::string(tokens[0]));
+    return false;
+  }
+}
+
+bool ListCommand::listMailBoxes() {
+  auto optMailBoxes = _configuration->availableMailBoxes();
+
+  if (!optMailBoxes) {
+    setErrorString("failed to read configuration for available mailboxes");
+    return false;
+  }
+
+  std::for_each(optMailBoxes->begin(), optMailBoxes->end(),
+                [num = size_t(1)](const lab4::MailBox &mb) mutable {
+                  std::cout << num << ')' << ' '
+                            << std::quoted(mb.getName(), '\'') << ',' << ' '
+                            << "max size" << ' ' << mb.getMaxSize() << '\n';
+                  ++num;
+                });
+
+  return true;
 }
