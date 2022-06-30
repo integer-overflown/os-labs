@@ -24,14 +24,16 @@ class DeleteCommand : public cli::AbstractCommand,
                       public cli::BuiltInRegister<DeleteCommand> {
  public:
   static constexpr auto cCommandName = "delete";
-  DeleteCommand();
+  explicit DeleteCommand(std::shared_ptr<lab4::IConfiguration> configuration);
   [[nodiscard]] std::string name() const override;
   bool acceptInput(const std::vector<std::string_view> &tokens) override;
   [[nodiscard]] std::pair<std::size_t, std::size_t> positionalArgumentCount()
       const noexcept override;
 
  private:
-  bool deleteEmailFile(std::string_view fileName);
+  bool deleteEmailFile(std::string_view fileName, std::string_view mailBoxName);
+
+  std::shared_ptr<lab4::IConfiguration>  _configuration;
 };
 
 class ListCommand : public cli::AbstractCommand,

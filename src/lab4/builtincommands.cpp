@@ -65,16 +65,10 @@ bool VisitFolderFiles(
     const std::function<bool(const WIN32_FIND_DATAA &)> &visitor) {
   std::string wildcard = "\\*";
 
-  if (folderName.size() > MAX_PATH - wildcard.size()) {
-    LOG_WARN("Folder name is too long");
-    return false;
-  }
-
   WIN32_FIND_DATAA fileData;
   HANDLE findHandle = FindFirstFileA((folderName + wildcard).data(), &fileData);
 
   if (findHandle == INVALID_HANDLE_VALUE) {
-    LOG_WARN("Failed to list directory contents: ") << GetLastError();
     return false;
   }
 
@@ -270,22 +264,26 @@ std::pair<std::size_t, std::size_t> CreateCommand::positionalArgumentCount()
   return {sizeRange.first, sizeRange.first + 1};
 }
 
-DeleteCommand::DeleteCommand() {
+DeleteCommand::DeleteCommand(
+    std::shared_ptr<lab4::IConfiguration> configuration)
+    : _configuration(std::move(configuration)) {
   setCommandDescription("delete particular email, or all of them");
   addPositionalArgument("subcommand",
                         "subcommand to invoke, valid values are: email, all");
+  addPositionalArgument("mailbox", "mailbox in which to delete files");
 }
 
 std::string DeleteCommand::name() const { return cCommandName; }
 
 bool DeleteCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   if (tokens[0] == "email") {
-    if (tokens.size() != 2) {
+    if (tokens.size() != 3) {
       setErrorString("missing filename");
       return false;
     }
 
-    std::string_view filename = tokens[1];
+    std::string_view mailBoxName = tokens[1];
+    std::string_view filename = tokens[2];
     // check if file is a path
     auto it = std::find_if(filename.begin(), filename.end(),
                            [](char c) { return c == '/' || c == '\\'; });
@@ -295,20 +293,23 @@ bool DeleteCommand::acceptInput(const std::vector<std::string_view> &tokens) {
       return false;
     }
 
-    return deleteEmailFile(filename);
+    return deleteEmailFile(filename, mailBoxName);
   } else {
     setErrorString("unknown subcommand: " + std::string(tokens[0]));
     return false;
   }
 }
 
-bool DeleteCommand::deleteEmailFile(std::string_view fileName) {
+bool DeleteCommand::deleteEmailFile(std::string_view fileName,
+                                    std::string_view mailBoxName) {
   if (fileName.length() > MAX_PATH) {
     setErrorString("filename is too long");
     return false;
   }
 
-  if (!DeleteFileA(fileName.data())) {
+  if (!DeleteFileA((lab4::GetMailboxFolderName(mailBoxName) + '\\' +
+                    std::string(fileName))
+                       .data())) {
     if (auto error = GetLastError(); error == ERROR_FILE_NOT_FOUND) {
       setErrorString("file not found");
     } else if (error == ERROR_ACCESS_DENIED) {
