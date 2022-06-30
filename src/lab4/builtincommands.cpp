@@ -363,6 +363,8 @@ bool ListCommand::listMailBoxes() {
         ULARGE_INTEGER totalSize{};
         size_t totalFiles{};
 
+        SetLastError(0);
+
         bool success = lab4::VisitFolderFiles(
             folderName, [&](const WIN32_FIND_DATAA &data) {
               ++totalFiles;
@@ -372,8 +374,14 @@ bool ListCommand::listMailBoxes() {
             });
 
         if (!success) {
-          std::cout << num << ')' << ' ' << "failed to query the info\n";
-          return;
+          if (DWORD error = GetLastError(); error == ERROR_PATH_NOT_FOUND) {
+            totalFiles = 0;
+            totalSize.QuadPart = 0;
+          } else {
+            std::cout << num << ')' << ' '
+                      << "failed to query the info, error code = " << error;
+            return;
+          }
         }
 
         std::cout << num << ')' << ' ' << std::quoted(mailBoxName, '\'') << ','
