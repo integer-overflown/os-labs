@@ -3,6 +3,7 @@
 #include <Windows.h>
 
 #include <cassert>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -59,12 +60,14 @@ std::string GetMailboxFolderName(std::string_view mailBoxName) {
   return "mailbox"s + '-' + std::string(mailBoxName) + '-' + "contents";
 }
 
-std::optional<size_t> FolderFileCount(const std::string &folderName) {
+bool VisitFolderFiles(
+    const std::string &folderName,
+    const std::function<bool(const WIN32_FIND_DATAA &)> &visitor) {
   std::string wildcard = "\\*";
 
   if (folderName.size() > MAX_PATH - wildcard.size()) {
     LOG_WARN("Folder name is too long");
-    return {};
+    return false;
   }
 
   WIN32_FIND_DATAA fileData;
@@ -72,10 +75,8 @@ std::optional<size_t> FolderFileCount(const std::string &folderName) {
 
   if (findHandle == INVALID_HANDLE_VALUE) {
     LOG_WARN("Failed to list directory contents: ") << GetLastError();
-    return {};
+    return false;
   }
-
-  size_t count{};
 
   for (;;) {
     BOOL status = FindNextFileA(findHandle, &fileData);
@@ -83,16 +84,27 @@ std::optional<size_t> FolderFileCount(const std::string &folderName) {
       if (GetLastError() == ERROR_NO_MORE_FILES) {
         break;
       } else {
-        return {};
+        return false;
       }
     }
     // skip parent dir reference
     if (std::strcmp(fileData.cFileName, "..") != 0) {
-      ++count;
+      if (!visitor(fileData)) {
+        break;
+      }
     }
   }
 
-  return count;
+  return true;
+}
+
+std::optional<size_t> FolderFileCount(const std::string &folderName) {
+  size_t size{};
+  bool success = VisitFolderFiles(folderName, [&size](const auto &) {
+    ++size;
+    return true;
+  });
+  return success ? std::make_optional<size_t>(size) : std::nullopt;
 }
 
 }  // namespace
@@ -346,11 +358,29 @@ bool ListCommand::listMailBoxes() {
       optMailBoxes->begin(), optMailBoxes->end(),
       [num = size_t(1)](const lab4::MailBox &mb) mutable {
         const std::string &mailBoxName = mb.getName();
-        const std::optional<size_t> used =
-            lab4::FolderFileCount(lab4::GetMailboxFolderName(mailBoxName));
+        const std::string folderName = lab4::GetMailboxFolderName(mailBoxName);
+
+        ULARGE_INTEGER totalSize{};
+        size_t totalFiles{};
+
+        bool success = lab4::VisitFolderFiles(
+            folderName, [&](const WIN32_FIND_DATAA &data) {
+              ++totalFiles;
+              totalSize.LowPart += data.nFileSizeLow;
+              totalSize.HighPart += data.nFileSizeHigh;
+              return true;
+            });
+
+        if (!success) {
+          std::cout << num << ')' << ' ' << "failed to query the info\n";
+          return;
+        }
+
         std::cout << num << ')' << ' ' << std::quoted(mailBoxName, '\'') << ','
-                  << ' ' << "contains" << ' ' << used.value_or(0) << '/'
-                  << mb.getMaxSize() << ' ' << "emails" << '\n';
+                  << ' ' << "contains" << ' ' << totalFiles << '/'
+                  << mb.getMaxSize() << ' ' << "emails" << ',' << ' '
+                  << "total size" << ' ' << totalSize.QuadPart << ' ' << "bytes"
+                  << '\n';
         ++num;
       });
 
