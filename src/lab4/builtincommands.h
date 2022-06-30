@@ -33,7 +33,7 @@ class DeleteCommand : public cli::AbstractCommand,
  private:
   bool deleteEmailFile(std::string_view fileName, std::string_view mailBoxName);
 
-  std::shared_ptr<lab4::IConfiguration>  _configuration;
+  std::shared_ptr<lab4::IConfiguration> _configuration;
 };
 
 class ListCommand : public cli::AbstractCommand,
@@ -49,8 +49,22 @@ class ListCommand : public cli::AbstractCommand,
  private:
   bool listMailBoxes();
   bool listMailBoxFiles();
-  template<typename Callable>
+  template <typename Callable>
   bool forEachMailbox(Callable &&callable);
+
+  std::shared_ptr<lab4::IConfiguration> _configuration;
+};
+
+class ShowCommand : public cli::AbstractCommand,
+                    public cli::BuiltInRegister<ShowCommand> {
+ public:
+  static constexpr auto cCommandName = "show";
+  explicit ShowCommand(std::shared_ptr<lab4::IConfiguration> configuration);
+  [[nodiscard]] std::string name() const override;
+  bool acceptInput(const std::vector<std::string_view> &tokens) override;
+
+ private:
+  bool showFile(std::string_view mailBox, std::string_view fileName);
 
   std::shared_ptr<lab4::IConfiguration> _configuration;
 };

@@ -3,6 +3,8 @@
 #include <Windows.h>
 
 #include <cassert>
+#include <cmath>
+#include <cstddef>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -99,6 +101,13 @@ std::optional<size_t> FolderFileCount(const std::string &folderName) {
     return true;
   });
   return success ? std::make_optional<size_t>(size) : std::nullopt;
+}
+
+bool IsPath(std::string_view filename) {
+  // check if file is a path
+  return std::find_if(filename.begin(), filename.end(), [](char c) {
+           return c == '/' || c == '\\';
+         }) != filename.end();
 }
 
 }  // namespace
@@ -284,11 +293,8 @@ bool DeleteCommand::acceptInput(const std::vector<std::string_view> &tokens) {
 
     std::string_view mailBoxName = tokens[1];
     std::string_view filename = tokens[2];
-    // check if file is a path
-    auto it = std::find_if(filename.begin(), filename.end(),
-                           [](char c) { return c == '/' || c == '\\'; });
 
-    if (it != filename.end()) {
+    if (lab4::IsPath(filename)) {
       setErrorString("filename cannot be a path");
       return false;
     }
@@ -411,13 +417,14 @@ bool ListCommand::listMailBoxes() {
 
 bool ListCommand::listMailBoxFiles() {
   return forEachMailbox([](const lab4::MailBox &mailBox) {
-    std::cout << "Mailbox" << ' ' << std::quoted(mailBox.getName(), '\'') << '\n';
-    bool success =
-        lab4::VisitFolderFiles(lab4::GetMailboxFolderName(mailBox.getName()),
-                               [&](const WIN32_FIND_DATAA &data) {
-                                 std::cout << '*' << ' ' << data.cFileName << '\n';
-                                 return true;
-                               });
+    std::cout << "Mailbox" << ' ' << std::quoted(mailBox.getName(), '\'')
+              << '\n';
+    bool success = lab4::VisitFolderFiles(
+        lab4::GetMailboxFolderName(mailBox.getName()),
+        [&](const WIN32_FIND_DATAA &data) {
+          std::cout << '*' << ' ' << data.cFileName << '\n';
+          return true;
+        });
 
     if (!success) {
       std::cout << "[!] Failed to query mailbox files\n";
@@ -430,4 +437,88 @@ std::pair<std::size_t, std::size_t> ListCommand::positionalArgumentCount()
     const noexcept {
   auto count = AbstractCommand::positionalArgumentCount();
   return {count.first - 1, count.first};
+}
+
+ShowCommand::ShowCommand(std::shared_ptr<lab4::IConfiguration> configuration)
+    : _configuration(std::move(configuration)) {
+  setCommandDescription("Show different entities, like files");
+  addPositionalArgument("entityType", "what to show, supported values: files");
+  addPositionalArgument("mailbox", "which mailbox to query");
+  addPositionalArgument("file", "what file to show");
+}
+
+std::string ShowCommand::name() const { return cCommandName; }
+
+bool ShowCommand::acceptInput(const std::vector<std::string_view> &tokens) {
+  if (tokens[0] == "files") {
+    return showFile(tokens[1], tokens[2]);
+  } else {
+    setErrorString("unknown entity type: " + std::string(tokens[0]));
+    return false;
+  }
+}
+
+bool ShowCommand::showFile(std::string_view mailBox,
+                           std::string_view fileName) {
+  using namespace std::string_literals;
+
+  if (lab4::IsPath(fileName)) {
+    setErrorString("file name component must be plain file name, not a path");
+    return false;
+  }
+
+  std::string folderName = lab4::GetMailboxFolderName(mailBox);
+  std::string fileNameString(fileName);
+
+  HANDLE fileHandle =
+      CreateFileA((folderName + '\\' + fileNameString).data(), GENERIC_READ,
+                  FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr);
+
+  if (fileHandle == INVALID_HANDLE_VALUE) {
+    if (DWORD error = GetLastError(); error == ERROR_PATH_NOT_FOUND) {
+      setErrorString("no such file: " + fileNameString);
+    } else {
+      setErrorString("unexpected error occurred when opening file " +
+                     fileNameString + ", error code " + std::to_string(error));
+    }
+    return false;
+  }
+
+  LARGE_INTEGER fileSize;
+  if (!GetFileSizeEx(fileHandle, &fileSize)) {
+    setErrorString("failed to get file size, error code " +
+                   std::to_string(GetLastError()));
+    return false;
+  }
+
+  constexpr ptrdiff_t cChunkSize = 255;
+  std::unique_ptr<char[]> buffer(new char[cChunkSize + 1]);
+
+  if (!buffer) {
+    setErrorString("failed to allocate read buffer of size: "s +
+                   std::to_string(cChunkSize) + " bytes"s);
+    return false;
+  }
+
+  for (LARGE_INTEGER remaining = fileSize; remaining.QuadPart > 0;) {
+    // need braces to specify function, not 'min' macro
+    size_t readChunkSize = (std::min)(cChunkSize, remaining.QuadPart);
+    DWORD bytesRead;
+
+    if (!ReadFile(fileHandle, buffer.get(), readChunkSize, &bytesRead,
+                  nullptr)) {
+      setErrorString("failed to read file");
+      return false;
+    }
+
+    buffer[readChunkSize] = '\0';
+
+    std::cout << buffer.get();
+    remaining.QuadPart -= bytesRead;
+  }
+
+  std::cout << '\n';
+
+  return true;
 }

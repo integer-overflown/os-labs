@@ -61,5 +61,6 @@ BuiltInCommandRegistry::BuiltInCommandRegistry(
   assert(_configuration);
   _commandMap = {builtInCommandFactory<CreateCommand>(),
                  builtInCommandFactory<DeleteCommand>(),
-                 builtInCommandFactory<ListCommand>()};
+                 builtInCommandFactory<ListCommand>(),
+                 builtInCommandFactory<ShowCommand>()};
 }
