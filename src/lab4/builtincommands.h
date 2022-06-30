@@ -43,9 +43,14 @@ class ListCommand : public cli::AbstractCommand,
   explicit ListCommand(std::shared_ptr<lab4::IConfiguration> configuration);
   [[nodiscard]] std::string name() const override;
   bool acceptInput(const std::vector<std::string_view> &tokens) override;
+  [[nodiscard]] std::pair<std::size_t, std::size_t> positionalArgumentCount()
+      const noexcept override;
 
  private:
   bool listMailBoxes();
+  bool listMailBoxFiles();
+  template<typename Callable>
+  bool forEachMailbox(Callable &&callable);
 
   std::shared_ptr<lab4::IConfiguration> _configuration;
 };

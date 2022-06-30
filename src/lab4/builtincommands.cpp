@@ -328,6 +328,8 @@ ListCommand::ListCommand(std::shared_ptr<lab4::IConfiguration> configuration)
   setCommandDescription("List various available instances, like mailboxes");
   addPositionalArgument("instanceType",
                         "instances to list, supported values: mailbox");
+  addPositionalArgument(
+      "query", "optional: what exactly to list, supported values: files");
 }
 
 std::pair<std::size_t, std::size_t> DeleteCommand::positionalArgumentCount()
@@ -340,6 +342,13 @@ std::string ListCommand::name() const { return cCommandName; }
 
 bool ListCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   if (tokens[0] == "mailbox") {
+    if (tokens.size() > 1) {
+      if (tokens[1] == "files") {
+        return listMailBoxFiles();
+      }
+      setErrorString("unknown query: " + std::string(tokens[1]));
+      return false;
+    }
     return listMailBoxes();
   } else {
     setErrorString("unknown subcommand: " + std::string(tokens[0]));
@@ -347,7 +356,8 @@ bool ListCommand::acceptInput(const std::vector<std::string_view> &tokens) {
   }
 }
 
-bool ListCommand::listMailBoxes() {
+template <typename Callable>
+bool ListCommand::forEachMailbox(Callable &&callable) {
   auto optMailBoxes = _configuration->availableMailBoxes();
 
   if (!optMailBoxes) {
@@ -355,43 +365,69 @@ bool ListCommand::listMailBoxes() {
     return false;
   }
 
-  std::for_each(
-      optMailBoxes->begin(), optMailBoxes->end(),
-      [num = size_t(1)](const lab4::MailBox &mb) mutable {
-        const std::string &mailBoxName = mb.getName();
-        const std::string folderName = lab4::GetMailboxFolderName(mailBoxName);
-
-        ULARGE_INTEGER totalSize{};
-        size_t totalFiles{};
-
-        SetLastError(0);
-
-        bool success = lab4::VisitFolderFiles(
-            folderName, [&](const WIN32_FIND_DATAA &data) {
-              ++totalFiles;
-              totalSize.LowPart += data.nFileSizeLow;
-              totalSize.HighPart += data.nFileSizeHigh;
-              return true;
-            });
-
-        if (!success) {
-          if (DWORD error = GetLastError(); error == ERROR_PATH_NOT_FOUND) {
-            totalFiles = 0;
-            totalSize.QuadPart = 0;
-          } else {
-            std::cout << num << ')' << ' '
-                      << "failed to query the info, error code = " << error;
-            return;
-          }
-        }
-
-        std::cout << num << ')' << ' ' << std::quoted(mailBoxName, '\'') << ','
-                  << ' ' << "contains" << ' ' << totalFiles << '/'
-                  << mb.getMaxSize() << ' ' << "emails" << ',' << ' '
-                  << "total size" << ' ' << totalSize.QuadPart << ' ' << "bytes"
-                  << '\n';
-        ++num;
-      });
+  std::for_each(optMailBoxes->begin(), optMailBoxes->end(),
+                std::forward<Callable>(callable));
 
   return true;
+}
+
+bool ListCommand::listMailBoxes() {
+  return forEachMailbox([num = size_t(1)](const lab4::MailBox &mb) mutable {
+    const std::string &mailBoxName = mb.getName();
+    const std::string folderName = lab4::GetMailboxFolderName(mailBoxName);
+
+    ULARGE_INTEGER totalSize{};
+    size_t totalFiles{};
+
+    SetLastError(0);
+
+    bool success =
+        lab4::VisitFolderFiles(folderName, [&](const WIN32_FIND_DATAA &data) {
+          ++totalFiles;
+          totalSize.LowPart += data.nFileSizeLow;
+          totalSize.HighPart += data.nFileSizeHigh;
+          return true;
+        });
+
+    if (!success) {
+      if (DWORD error = GetLastError(); error == ERROR_PATH_NOT_FOUND) {
+        totalFiles = 0;
+        totalSize.QuadPart = 0;
+      } else {
+        std::cout << num << ')' << ' '
+                  << "failed to query the info, error code = " << error;
+        return;
+      }
+    }
+
+    std::cout << num << ')' << ' ' << std::quoted(mailBoxName, '\'') << ','
+              << ' ' << "contains" << ' ' << totalFiles << '/'
+              << mb.getMaxSize() << ' ' << "emails" << ',' << ' '
+              << "total size" << ' ' << totalSize.QuadPart << ' ' << "bytes"
+              << '\n';
+    ++num;
+  });
+}
+
+bool ListCommand::listMailBoxFiles() {
+  return forEachMailbox([](const lab4::MailBox &mailBox) {
+    std::cout << "Mailbox" << ' ' << std::quoted(mailBox.getName(), '\'') << '\n';
+    bool success =
+        lab4::VisitFolderFiles(lab4::GetMailboxFolderName(mailBox.getName()),
+                               [&](const WIN32_FIND_DATAA &data) {
+                                 std::cout << '*' << ' ' << data.cFileName << '\n';
+                                 return true;
+                               });
+
+    if (!success) {
+      std::cout << "[!] Failed to query mailbox files\n";
+    }
+
+    std::cout << '\n';
+  });
+}
+std::pair<std::size_t, std::size_t> ListCommand::positionalArgumentCount()
+    const noexcept {
+  auto count = AbstractCommand::positionalArgumentCount();
+  return {count.first - 1, count.first};
 }
