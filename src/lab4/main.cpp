@@ -5,10 +5,11 @@
 #include "builtinregistry.h"
 #include "cli/commandinterpreter.h"
 #include "configuration.h"
-#include "settings.h"
 
 int main() {
-  SetConsoleCP(CP_UTF8);
+  SetConsoleCP(CP_UTF8);        // set input mode to UTF-8
+  SetConsoleOutputCP(CP_UTF8);  // set output mode to UTF-8
+
   cli::CommandInterpreter interpreter(
       lab4::builtInCommandRegistry(std::make_shared<lab4::Configuration>()));
 
