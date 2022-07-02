@@ -64,7 +64,7 @@ void RunTask6() {
   // Task 6
 #ifndef UNICODE
   std::for_each(gFamilyMembers, gFamilyMembers + std::size(gFamilyMembers),
-                [](const char *value) { printf("%s\n", value); });
+                [](const char *value) { std::cout << value << '\n'; });
 #else
   lab1::out << _T("-- Skipping task 6: can only be run in ANSI mode")
             << _T('\n');
