@@ -18,7 +18,7 @@ class MailBox : public ISerializable {
 
  private:
   std::string _name;
-  size_t _maxSize;
+  size_t _maxSize{};
 };
 
 }  // namespace lab4
