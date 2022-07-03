@@ -45,7 +45,15 @@ std::optional<ResourceLibrary> ResourceLibrary::load(
     std::basic_string_view<TCHAR> libName, UINT langId) {
   HMODULE dllHandle =
       LoadLibraryEx(libName.data(), nullptr, LOAD_LIBRARY_AS_DATAFILE);
+  if (dllHandle == INVALID_HANDLE_VALUE) {
+    return {};
+  }
   return dllHandle ? std::make_optional(ResourceLibrary{dllHandle, langId})
                    : std::nullopt;
 }
+
+ResourceLibrary::~ResourceLibrary() {
+  CloseHandle(_libHandle);
+}
+
 }  // namespace lab3

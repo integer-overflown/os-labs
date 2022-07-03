@@ -11,6 +11,7 @@ class ResourceLibrary {
  public:
   static std::optional<ResourceLibrary> load(std::basic_string_view<TCHAR> libName, UINT langId);
   std::optional<std::wstring> GetString(UINT resId);
+  ~ResourceLibrary();
 
  private:
   explicit ResourceLibrary(HMODULE libHandle, UINT langId);
