@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -13,11 +12,21 @@
 #include <sstream>
 #include <string>
 
-#include "log.h"
 #include "mailbox.h"
 
 namespace lab4 {
 namespace {
+
+struct CloseHandleDeleter {
+  void operator()(HANDLE handle) const {
+    if (handle && handle != INVALID_HANDLE_VALUE) {
+      CloseHandle(handle);
+    }
+  }
+};
+
+using UniqueHandle =
+    std::unique_ptr<std::remove_pointer_t<HANDLE>, CloseHandleDeleter>;
 
 size_t parseInt(std::string_view s) {
   char *endPtr;
@@ -210,12 +219,12 @@ bool CreateCommand::createEmailFile(std::string_view fileName,
     return false;
   }
 
-  HANDLE fileHandle =
+  lab4::UniqueHandle fileHandle{
       CreateFileA((folderName + '\\' + std::string(fileName)).data(),
                   GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
-                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr);
+                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr)};
 
-  if (fileHandle == INVALID_HANDLE_VALUE) {
+  if (fileHandle.get() == INVALID_HANDLE_VALUE) {
     DWORD errorCode = GetLastError();
     if (errorCode == ERROR_FILE_EXISTS) {
       setErrorString("file already exists: " + std::string(fileName));
@@ -225,14 +234,13 @@ bool CreateCommand::createEmailFile(std::string_view fileName,
     return false;
   }
 
-  bool success = lab4::EnterEditingMode(fileHandle);
+  bool success = lab4::EnterEditingMode(fileHandle.get());
 
   if (!success) {
     setErrorString("failed to write file, code: " +
                    std::to_string(GetLastError()));
   }
 
-  CloseHandle(fileHandle);
   return success;
 }
 
@@ -470,12 +478,12 @@ bool ShowCommand::showFile(std::string_view mailBox,
   std::string folderName = lab4::GetMailboxFolderName(mailBox);
   std::string fileNameString(fileName);
 
-  HANDLE fileHandle =
+  lab4::UniqueHandle fileHandle{
       CreateFileA((folderName + '\\' + fileNameString).data(), GENERIC_READ,
                   FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr);
+                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_POSIX_SEMANTICS, nullptr)};
 
-  if (fileHandle == INVALID_HANDLE_VALUE) {
+  if (fileHandle.get() == INVALID_HANDLE_VALUE) {
     if (DWORD error = GetLastError(); error == ERROR_PATH_NOT_FOUND) {
       setErrorString("no such file: " + fileNameString);
     } else {
@@ -486,7 +494,7 @@ bool ShowCommand::showFile(std::string_view mailBox,
   }
 
   LARGE_INTEGER fileSize;
-  if (!GetFileSizeEx(fileHandle, &fileSize)) {
+  if (!GetFileSizeEx(fileHandle.get(), &fileSize)) {
     setErrorString("failed to get file size, error code " +
                    std::to_string(GetLastError()));
     return false;
@@ -506,7 +514,7 @@ bool ShowCommand::showFile(std::string_view mailBox,
     size_t readChunkSize = (std::min)(cChunkSize, remaining.QuadPart);
     DWORD bytesRead;
 
-    if (!ReadFile(fileHandle, buffer.get(), readChunkSize, &bytesRead,
+    if (!ReadFile(fileHandle.get(), buffer.get(), readChunkSize, &bytesRead,
                   nullptr)) {
       setErrorString("failed to read file");
       return false;
