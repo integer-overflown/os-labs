@@ -23,6 +23,8 @@ constexpr auto cNotepadOpenMode = _T("/W");
 constexpr auto cNotepadOpenMode = _T("/A");
 #endif
 
+constexpr auto cFileDirName = _T("files");
+
 [[noreturn]] void HandleFatalWinApiError(const char *reason) {
   std::cerr << reason << ", error code " << GetLastError() << '\n';
   std::terminate();
@@ -65,9 +67,16 @@ int main() {
 
   std::cout << "Launch time (filetime): " << lab7::FileTimeToUInt64(convertedTime) << '\n';
 
+  if (!CreateDirectory(lab7::cFileDirName, nullptr)) {
+    // we expect to have ERROR_ALREADY_EXISTS error
+    if (GetLastError() != ERROR_ALREADY_EXISTS) {
+      HandleFatalWinApiError("CreateDirectory failed");
+    }
+  }
+
   for (const TCHAR *fileName : cFileNames) {
     auto launchLine = "notepad.exe"_ts + _T(' ') + lab7::cNotepadOpenMode +
-                      _T(' ') + fileName;
+                      _T(' ') + lab7::cFileDirName + '\\' + fileName;
 
     std::cout << "Launching process: " << launchLine << '\n';
 
