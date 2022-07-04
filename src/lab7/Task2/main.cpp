@@ -22,13 +22,13 @@ DWORD ThreadRoutine(LPVOID userData) {
   gExecutionTimes++;
 
   outputLock.lock();  // guard shared resource
-  std::cout << "Begin thread: " << threadNo << '\n';
+  std::cout << "Begin thread: " << threadNo << std::endl;
   outputLock.unlock();  // keep lock for smallest time possible
 
   Sleep(cDefaultThreadIdleTimeMs);  // imitate doing hard computations
 
   outputLock.lock();
-  std::cout << "End thread: " << threadNo << '\n';
+  std::cout << "End thread: " << threadNo << std::endl;
   outputLock.unlock();
 
   return 0;
@@ -61,8 +61,10 @@ int main() {
     HandleFatalWinApiError("WaitForMultipleObjects failed");
   }
 
+  outputLock.lock();
   std::cout << "Thread routine has been executed" << ' '
-            << gExecutionTimes.load() << ' ' << "times" << '\n';
+            << gExecutionTimes.load() << ' ' << "times" << std::endl;
+  outputLock.unlock();
 
   //  Wait for all threads to finish
   WaitForMultipleObjects(cThreadAmount, threadHandles, true, INFINITE);
