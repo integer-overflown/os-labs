@@ -54,7 +54,7 @@ int main() {
   processStartUpInfo.cb = sizeof(processStartUpInfo);
   processStartUpInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-  GetLocalTime(&launchTime);
+  GetSystemTime(&launchTime);
   std::cout << "Launch time (system): " << std::setfill('0') << launchTime.wYear
             << '-' << std::setw(2) << launchTime.wMonth << '-' << std::setw(2)
             << launchTime.wDay << ' ' << std::setw(2) << launchTime.wHour << ':'
