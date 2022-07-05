@@ -2,7 +2,6 @@
 #include <Windows.h>
 
 #include <cstdlib>
-#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -30,21 +29,12 @@ constexpr auto cFileDirName = _T("files");
   std::terminate();
 }
 
-constexpr uint64_t FileTimeToUInt64(const FILETIME &ft) {
-  ULARGE_INTEGER intValue{};
-  intValue.LowPart = ft.dwLowDateTime;
-  intValue.HighPart = ft.dwHighDateTime;
-  return intValue.QuadPart;
-}
-
 }  // namespace lab7
 
 int main() {
   using namespace lab7;
   PROCESS_INFORMATION processInfo;
   STARTUPINFO processStartUpInfo;
-  SYSTEMTIME launchTime;
-  FILETIME convertedTime;
 
   constexpr const TCHAR *cFileNames[] = {_T("first.txt"), _T("second.txt")};
 
@@ -52,20 +42,6 @@ int main() {
   SecureZeroMemory(&processStartUpInfo, sizeof(processStartUpInfo));
 
   processStartUpInfo.cb = sizeof(processStartUpInfo);
-  processStartUpInfo.dwFlags |= STARTF_USESTDHANDLES;
-
-  GetSystemTime(&launchTime);
-  std::cout << "Launch time (system): " << std::setfill('0') << launchTime.wYear
-            << '-' << std::setw(2) << launchTime.wMonth << '-' << std::setw(2)
-            << launchTime.wDay << ' ' << std::setw(2) << launchTime.wHour << ':'
-            << std::setw(2) << launchTime.wMinute << ':' << std::setw(2)
-            << launchTime.wSecond << '\n';
-
-  if (!SystemTimeToFileTime(&launchTime, &convertedTime)) {
-    HandleFatalWinApiError("SystemTimeToFileTime failed");
-  }
-
-  std::cout << "Launch time (filetime): " << lab7::FileTimeToUInt64(convertedTime) << '\n';
 
   if (!CreateDirectory(lab7::cFileDirName, nullptr)) {
     // we expect to have ERROR_ALREADY_EXISTS error

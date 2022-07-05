@@ -152,13 +152,15 @@ int main(int argc, char *argv[]) {
     }
 
     // check if the file is older than editor launch time
-    if (CompareFileTime(&findData.ftLastWriteTime, &birthTime) == 1)
-    {
-
+    if (CompareFileTime(&findData.ftLastWriteTime, &birthTime) >= 0) {
       lab7::DescribeFile(findData);
       char fillChar = std::cout.fill();
       std::cout << std::setfill('-') << std::setw(24) << ""
                 << std::setfill(fillChar) << '\n';
+    } else {
+      std::cout << "File: " << findData.cFileName << " is too young: "
+                << lab7::FileTimeToUInt64(findData.ftLastWriteTime) << " < "
+                << lab7::FileTimeToUInt64(birthTime) << '\n';
     }
 
     hasNext = FindNextFile(findHandle, &findData);
