@@ -1,6 +1,6 @@
 set(TARGET_NAME ${PROJECT_EXE_NAME_PREFIX}lab7_file_reader)
-set(TASK2_HDR)
-set(TASK2_SRC "main.cpp")
+set(TASK1_HDR)
+set(TASK1_SRC "main.cpp")
 
-add_executable(${TARGET_NAME} ${TASK2_HDR} ${TASK2_SRC})
+add_executable(${TARGET_NAME} ${TASK1_HDR} ${TASK1_SRC})
 set_property(TARGET ${TARGET_NAME} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${LAB7_BIN_OUTPUT_DIR}/$<CONFIG>)
