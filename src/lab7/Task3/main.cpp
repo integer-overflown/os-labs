@@ -43,7 +43,21 @@ float Matrix::operator()(size_t row, size_t col) const {
 float &Matrix::operator()(size_t row, size_t col) { return _matrix[row][col]; }
 
 Matrix Matrix::multiply(const Matrix &other, std::execution::sequenced_policy) {
-  return {0, 0};
+  if (cols() != other.rows()) {
+    throw std::invalid_argument("matrices are of invalid dimensions");
+  }
+
+  Matrix result(rows(), other.cols());
+
+  for (size_t i = 0; i < rows(); ++i) {
+    for (size_t j = 0; j < other.cols(); ++j) {
+      for (size_t k = 0; k < cols(); ++k) {
+        result(i, j) += (*this)(i, k) * other(k, j);
+      }
+    }
+  }
+
+  return result;
 }
 
 Matrix Matrix::multiply(const Matrix &other,
