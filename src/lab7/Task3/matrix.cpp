@@ -1,7 +1,7 @@
 #include "matrix.h"
 
-#include <iomanip>
 #include <algorithm>
+#include <iomanip>
 #include <stdexcept>
 
 namespace lab7 {
@@ -71,6 +71,16 @@ std::ostream &operator<<(std::ostream &out, const Matrix &m) {
     out << '\n';
   }
   return out;
+}
+
+std::pair<MatrixRowIterator, MatrixRowIterator> Matrix::rowEntries(
+    size_t index) const {
+  return {{*this, index}, {*this, index, cols()}};
+}
+
+std::pair<MatrixColumnIterator, MatrixColumnIterator> Matrix::columnEntries(
+    size_t index) const {
+  return {{*this, index}, {*this, index, rows()}};
 }
 
 }  // namespace lab7
