@@ -8,7 +8,8 @@ namespace lab7 {
 
 class Matrix {
  public:
-  Matrix(size_t rows, size_t cols);
+  using EntryGenerator = float (*)(size_t, size_t);
+  Matrix(size_t rows, size_t cols, EntryGenerator entryGenerator = nullptr);
   [[nodiscard]] size_t rows() const;
   [[nodiscard]] size_t cols() const;
   float operator()(size_t row, size_t col) const;
@@ -22,14 +23,28 @@ class Matrix {
   std::vector<std::vector<float>> _matrix;
 };
 
-Matrix::Matrix(size_t rows, size_t cols) {
+Matrix::Matrix(size_t rows, size_t cols, EntryGenerator entryGenerator) {
   if (rows == 0 || cols == 0) {
     throw std::invalid_argument("Matrix dimensions must be non-zero");
   }
 
   _matrix.resize(rows);
-  std::generate(_matrix.begin(), _matrix.end(),
-                [cols]() { return std::vector<float>(cols); });
+
+  if (entryGenerator) {
+    std::generate(_matrix.begin(), _matrix.end(),
+                  [=, rowNo = size_t(0)]() mutable -> std::vector<float> {
+                    std::vector<float> row(cols);
+                    std::generate(row.begin(), row.end(),
+                                  [=, colNo = size_t(0)]() mutable -> float {
+                                    return entryGenerator(rowNo, colNo++);
+                                  });
+                    ++rowNo;
+                    return row;
+                  });
+  } else {
+    std::generate(_matrix.begin(), _matrix.end(),
+                  [cols]() { return std::vector<float>(cols); });
+  }
 }
 
 size_t Matrix::rows() const { return _matrix.size(); }
