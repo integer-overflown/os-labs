@@ -12,6 +12,7 @@ class Matrix {
   [[nodiscard]] size_t rows() const;
   [[nodiscard]] size_t cols() const;
   float operator()(size_t row, size_t col) const;
+  float &operator()(size_t row, size_t col);
   Matrix multiply(const Matrix &other, std::execution::sequenced_policy);
   Matrix multiply(const Matrix &other,
                   std::execution::parallel_unsequenced_policy);
@@ -38,6 +39,8 @@ size_t Matrix::cols() const { return _matrix[0].size(); }
 float Matrix::operator()(size_t row, size_t col) const {
   return _matrix[row][col];
 }
+
+float &Matrix::operator()(size_t row, size_t col) { return _matrix[row][col]; }
 
 Matrix Matrix::multiply(const Matrix &other, std::execution::sequenced_policy) {
   return {0, 0};
