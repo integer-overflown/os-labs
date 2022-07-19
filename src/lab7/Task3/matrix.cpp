@@ -171,6 +171,10 @@ Matrix Matrix::multiply(const Matrix &other,
     if (otherCol == other.cols() - 1) {
       if (selfRow == rows() - 1) {
         if (numRunningThreads > 0) {
+          using DiffType = std::iterator_traits<
+              decltype(threadHandles)::iterator>::difference_type;
+          threadHandles.erase(std::next(
+              threadHandles.begin(), static_cast<DiffType>(finishedThreadIdx)));
           continue;
         } else {
           break;
@@ -197,6 +201,8 @@ Matrix Matrix::multiply(const Matrix &other,
                      0,                                  // run immediately
                      nullptr  // out ptr to thread id, ignored
         );
+
+    ++numRunningThreads;
   }
 
   std::for_each(threadHandles.begin(), threadHandles.end(), CloseHandle);
