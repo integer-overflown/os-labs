@@ -7,40 +7,25 @@
 #include <string_view>
 #include <variant>
 
-namespace lab7 {
+#include "Utils/output.h"
+#include "Utils/process.h"
+#include "Utils/file.h"
 
-inline namespace literals {
-std::basic_string<TCHAR> operator""_ts(const TCHAR *string, size_t size) {
-  return {string, size};
-}
-}  // namespace literals
+namespace lab7 {
 
 namespace {
 
 enum class ParseError { ValueOutOfBounds, InvalidInteger };
 
 #ifdef UNICODE
-constexpr auto cFileReadMode = _T(rt, ccs=UNICODE");
+constexpr auto cFileReadMode = _T("rt, ccs=UNICODE");
 #else
 constexpr auto cFileReadMode = _T("rt");
 #endif
 
-constexpr size_t cBufferSize = 1024 * 8; // 8Kb
+constexpr size_t cBufferSize = 1024 * 8;  // 8Kb
 constexpr auto cFilesDirectory = _T("files");
 
-constexpr void UInt64ToFileTime(uint64_t value, FILETIME &ft) {
-  // this assumes the machine is little-endian,
-  // which is true for most Windows versions out there
-  ft.dwLowDateTime = value & UINT64_C(0xFFFF'FFFF);
-  ft.dwHighDateTime = value >> 32;
-}
-
-constexpr uint64_t FileTimeToUInt64(const FILETIME &ft) {
-  ULARGE_INTEGER intValue{};
-  intValue.LowPart = ft.dwLowDateTime;
-  intValue.HighPart = ft.dwHighDateTime;
-  return intValue.QuadPart;
-}
 
 std::variant<uint64_t, ParseError> ParseUInt64(std::string_view string) {
   char *endPtr;
@@ -58,19 +43,14 @@ std::variant<uint64_t, ParseError> ParseUInt64(std::string_view string) {
   return value;
 }
 
-[[noreturn]] void HandleFatalWinApiError(const char *reason) {
-  std::cerr << reason << ", error code " << GetLastError() << '\n';
-  std::terminate();
-}
-
-void DescribeFile(const WIN32_FIND_DATA& findData)
-{
+void DescribeFile(const WIN32_FIND_DATA &findData) {
   // large amount of data is better to allocate on heap,
   // not to exhaust stack memory
   std::unique_ptr<TCHAR[]> buffer(new TCHAR[cBufferSize]);
   FILE *inputStream;
 
-  auto path = ""_ts + cFilesDirectory + '\\' + findData.cFileName;
+  auto path = std::basic_string<TCHAR>(_T("")) + cFilesDirectory + _T('\\') +
+              findData.cFileName;
 
   if (!(inputStream = _tfsopen(path.data(), cFileReadMode, _SH_DENYWR))) {
     std::cerr << "Failed to open file: " << findData.cFileName << '\n';
@@ -81,7 +61,7 @@ void DescribeFile(const WIN32_FIND_DATA& findData)
   fileSize.LowPart = findData.nFileSizeLow;
   fileSize.HighPart = findData.nFileSizeHigh;
 
-  std::cout << "File" << ' ' << std::quoted(findData.cFileName, '\'') << ' '
+  lab7::out << "File" << ' ' << std::quoted(findData.cFileName, _T('\'')) << ' '
             << "size" << ' ' << fileSize.QuadPart << ' ' << "bytes" << '\n';
 
   uint64_t lineCount{};
@@ -89,11 +69,11 @@ void DescribeFile(const WIN32_FIND_DATA& findData)
   while (_fgetts(buffer.get(), cBufferSize, inputStream)) {
     ++lineCount;
     const size_t lineLength = _tcslen(buffer.get());
-    std::cout << "line" << ' ' << lineCount << ' ' << ':' << ' ' << lineLength
+    lab7::out << "line" << ' ' << lineCount << ' ' << ':' << ' ' << lineLength
               << ' ' << "characters" << '\n';
   }
 
-  std::cout << "Total lines in file: " << lineCount << '\n';
+  lab7::out << "Total lines in file: " << lineCount << '\n';
 }
 
 size_t __forceinline tstrcmp(const TCHAR *a, const TCHAR *b) {
@@ -102,14 +82,12 @@ size_t __forceinline tstrcmp(const TCHAR *a, const TCHAR *b) {
 #else
   return strcmp(a, b);
 #endif
-    }
+}
 
 }  // namespace
 }  // namespace lab7
 
 int main(int argc, char *argv[]) {
-  using namespace lab7::literals;
-
   if (argc != 2) {
     std::cerr << "Usage: " << (argc > 0 ? argv[0] : "[exe file]") << ' '
               << "[file time]" << '\n';
@@ -136,8 +114,10 @@ int main(int argc, char *argv[]) {
   lab7::UInt64ToFileTime(std::get<uint64_t>(fileTimeResult), birthTime);
 
   WIN32_FIND_DATA findData;
-  HANDLE findHandle = FindFirstFile(
-      (""_ts + lab7::cFilesDirectory + _T('\\') + "*"_ts).data(), &findData);
+  HANDLE findHandle = FindFirstFile((std::basic_string<TCHAR>(_T("")) +
+                                     lab7::cFilesDirectory + _T('\\') + _T("*"))
+                                        .data(),
+                                    &findData);
 
   if (!findHandle || findHandle == INVALID_HANDLE_VALUE) {
     lab7::HandleFatalWinApiError("FindFirstFile failed");
@@ -154,13 +134,13 @@ int main(int argc, char *argv[]) {
     // check if the file is older than editor launch time
     if (CompareFileTime(&findData.ftLastWriteTime, &birthTime) >= 0) {
       lab7::DescribeFile(findData);
-      char fillChar = std::cout.fill();
-      std::cout << std::setfill('-') << std::setw(24) << ""
+      TCHAR fillChar = lab7::out.fill();
+      lab7::out << std::setfill(_T('-')) << std::setw(24) << _T("")
                 << std::setfill(fillChar) << '\n';
     } else {
-      std::cout << "File: " << findData.cFileName << " is too young: "
-                << lab7::FileTimeToUInt64(findData.ftLastWriteTime) << " < "
-                << lab7::FileTimeToUInt64(birthTime) << '\n';
+      lab7::out << _T("File: ") << findData.cFileName << _T(" is too young: ")
+                << lab7::FileTimeToUInt64(findData.ftLastWriteTime) << _T(" < ")
+                << lab7::FileTimeToUInt64(birthTime) << _T('\n');
     }
 
     hasNext = FindNextFile(findHandle, &findData);

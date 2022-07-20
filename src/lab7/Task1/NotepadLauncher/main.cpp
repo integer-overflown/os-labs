@@ -5,16 +5,10 @@
 #include <iostream>
 #include <string>
 
-#define CreateProcessSimple(launchLine, startUpInfo, processInfo)           \
-  CreateProcess(nullptr, (launchLine), nullptr, nullptr, false, 0, nullptr, \
-                nullptr, (startUpInfo), (processInfo))
+#include "Utils/output.h"
+#include "Utils/process.h"
 
 namespace lab7 {
-inline namespace literals {
-std::basic_string<TCHAR> operator""_ts(const TCHAR *string, size_t size) {
-  return {string, size};
-}
-}  // namespace literals
 
 #ifdef UNICODE
 constexpr auto cNotepadOpenMode = _T("/W");
@@ -23,11 +17,6 @@ constexpr auto cNotepadOpenMode = _T("/A");
 #endif
 
 constexpr auto cFileDirName = _T("files");
-
-[[noreturn]] void HandleFatalWinApiError(const char *reason) {
-  std::cerr << reason << ", error code " << GetLastError() << '\n';
-  std::terminate();
-}
 
 }  // namespace lab7
 
@@ -51,10 +40,11 @@ int main() {
   }
 
   for (const TCHAR *fileName : cFileNames) {
-    auto launchLine = "notepad.exe"_ts + _T(' ') + lab7::cNotepadOpenMode +
-                      _T(' ') + lab7::cFileDirName + '\\' + fileName;
+    auto launchLine = std::basic_string<TCHAR>(_T("notepad.exe")) + _T(' ') +
+                      lab7::cNotepadOpenMode + _T(' ') + lab7::cFileDirName +
+                      _T('\\') + fileName;
 
-    std::cout << "Launching process: " << launchLine << '\n';
+    lab7::out << "Launching process: " << launchLine << '\n';
 
     if (!CreateProcessSimple(launchLine.data(), &processStartUpInfo,
                              &processInfo)) {

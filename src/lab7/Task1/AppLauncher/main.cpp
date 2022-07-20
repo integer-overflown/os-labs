@@ -5,31 +5,12 @@
 #include <iostream>
 #include <string>
 
-#define CreateProcessSimple(launchLine, startUpInfo, processInfo)           \
-  CreateProcess(nullptr, (launchLine), nullptr, nullptr, false, 0, nullptr, \
-                nullptr, (startUpInfo), (processInfo))
+#include "Utils/output.h"
+#include "Utils/process.h"
+#include "Utils/file.h"
 
 namespace lab7 {
 namespace {
-#ifdef UNICODE
-std::wostream &out = std::wcout;
-std::wostream &err = std::wcerr;
-#else
-std::ostream &out = std::cout;
-std::ostream &err = std::cerr;
-#endif
-
-constexpr uint64_t FileTimeToUInt64(const FILETIME &ft) {
-  ULARGE_INTEGER intValue{};
-  intValue.LowPart = ft.dwLowDateTime;
-  intValue.HighPart = ft.dwHighDateTime;
-  return intValue.QuadPart;
-}
-
-[[noreturn]] void HandleFatalWinApiError(const char *reason) {
-  lab7::err << reason << ", error code " << GetLastError() << '\n';
-  std::terminate();
-}
 
 template <typename T>
 std::basic_string<TCHAR> __forceinline to_string(T value) {
