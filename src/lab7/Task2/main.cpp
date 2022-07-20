@@ -53,14 +53,16 @@ int main() {
     }
   }
 
-  if (WaitForMultipleObjects(cThreadAmount, threadHandles, false, INFINITE) ==
-      WAIT_FAILED) {
+  if (WaitForMultipleObjects(std::size(threadHandles), threadHandles, false,
+                             INFINITE) == WAIT_FAILED) {
     lab7::HandleFatalWinApiError("WaitForMultipleObjects failed");
   }
 
+  const DWORD timesExecuted = gExecutionTimes.load();
+
   outputLock.lock();
-  std::cout << "Thread routine has been executed" << ' '
-            << gExecutionTimes.load() << ' ' << "times" << std::endl;
+  std::cout << "Thread routine has been executed" << ' ' << timesExecuted << ' '
+            << "times" << std::endl;
   outputLock.unlock();
 
   //  Wait for all threads to finish
