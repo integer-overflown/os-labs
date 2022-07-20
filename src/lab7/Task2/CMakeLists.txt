@@ -4,3 +4,5 @@ set(TASK2_SRC "main.cpp")
 
 add_executable(${TARGET_NAME} ${TASK2_HDR} ${TASK2_SRC})
 set_property(TARGET ${TARGET_NAME} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${LAB7_BIN_OUTPUT_DIR}/$<CONFIG>)
+
+target_link_libraries(${TARGET_NAME} PRIVATE ${PROJECT_EXE_NAME_PREFIX}lab7_utils)

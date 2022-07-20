@@ -5,17 +5,14 @@
 #include <iostream>
 #include <mutex>
 
+#include "Utils/process.h"
+
 namespace {
 
 constexpr DWORD cDefaultThreadIdleTimeMs = 800;
 
 std::atomic<DWORD> gExecutionTimes = {};
 std::mutex outputLock;
-
-void HandleFatalWinApiError(const char *reason) {
-  std::cerr << reason << ", error code " << GetLastError() << '\n';
-  std::terminate();
-}
 
 DWORD ThreadRoutine(LPVOID userData) {
   const auto threadNo = *static_cast<DWORD *>(userData);
@@ -52,13 +49,13 @@ int main() {
                      nullptr  // out ptr to thread id, ignored
         );
     if (!threadHandles[i]) {
-      HandleFatalWinApiError("Create thread failed");
+      lab7::HandleFatalWinApiError("Create thread failed");
     }
   }
 
   if (WaitForMultipleObjects(cThreadAmount, threadHandles, false, INFINITE) ==
       WAIT_FAILED) {
-    HandleFatalWinApiError("WaitForMultipleObjects failed");
+    lab7::HandleFatalWinApiError("WaitForMultipleObjects failed");
   }
 
   outputLock.lock();
